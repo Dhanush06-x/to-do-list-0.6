@@ -1,0 +1,516 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <meta name="theme-color" content="#4f46e5">
+  <meta name="description" content="Professional Task & To-Do Planner with Monthly Calendar, Consistency Tracker, Green/Red Arrow Marks & Mobile Reminder Station">
+  <link rel="icon" type="image/svg+xml" href="favicon.svg">
+  <link rel="manifest" href="manifest.json">
+  <title>DailyFlow — Tasks, Calendar, Consistency & Reminders</title>
+  <link rel="stylesheet" href="styles.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+</head>
+<body>
+  <div class="app-container">
+    <!-- Top Header -->
+    <header class="app-header">
+      <div class="header-left">
+        <div class="logo-icon">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <polyline points="9 18 15 12 9 6"></polyline>
+            <polyline points="15 18 21 12 15 6"></polyline>
+          </svg>
+        </div>
+        <div>
+          <h1 class="app-title">DailyFlow <span class="app-version-badge">PRO</span></h1>
+          <p class="app-subtitle" id="current-date-display">Today</p>
+        </div>
+      </div>
+
+      <div class="header-actions">
+        <button id="btn-today" class="btn btn-secondary btn-sm" title="Jump to Today's Agenda">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+          Today
+        </button>
+        <button id="btn-consistency-modal" class="btn btn-secondary btn-sm" title="View Monthly Consistency Matrix">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+          Consistency
+        </button>
+        <button id="btn-search-toggle" class="btn btn-icon" title="Search all tasks & memos">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+        </button>
+        <button id="btn-backup" class="btn btn-icon" title="Data Backup / Export & Import">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+        </button>
+        <button id="btn-theme-toggle" class="btn btn-icon" title="Toggle Dark/Light Mode">
+          <span id="theme-icon">🌙</span>
+        </button>
+      </div>
+    </header>
+
+    <!-- Global Search Bar (Collapsible) -->
+    <div id="search-bar-container" class="search-bar-container hidden">
+      <div class="search-input-wrapper">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+        <input type="text" id="global-search-input" placeholder="Search tasks, priorities, notes across all dates...">
+        <button id="btn-search-close" class="btn-clear">&times;</button>
+      </div>
+      <div id="search-results" class="search-results"></div>
+    </div>
+
+    <!-- Main Workspace Layout (Desktop 2-col sidebar + main, Mobile responsive) -->
+    <main class="main-layout">
+      <!-- Left Column: Calendar & Monthly Consistency Overview -->
+      <aside class="sidebar-panel">
+        <!-- Interactive Monthly Calendar Card -->
+        <section class="card calendar-card" id="calendar-section">
+          <div class="calendar-header">
+            <button id="cal-prev-month" class="btn btn-icon btn-sm" aria-label="Previous month">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="15 18 9 12 15 6"/></svg>
+            </button>
+            <div class="calendar-title-wrap">
+              <h2 id="calendar-month-year" class="calendar-month-title">October 2026</h2>
+              <span class="calendar-badge" id="calendar-month-badge">Month View</span>
+            </div>
+            <button id="cal-next-month" class="btn btn-icon btn-sm" aria-label="Next month">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="9 18 15 12 9 6"/></svg>
+            </button>
+          </div>
+
+          <div class="calendar-weekdays">
+            <span>Su</span><span>Mo</span><span>Tu</span><span>We</span><span>Th</span><span>Fr</span><span>Sa</span>
+          </div>
+
+          <div id="calendar-grid" class="calendar-grid">
+            <!-- Dynamically populated via JS -->
+          </div>
+
+          <div class="calendar-legend">
+            <span class="legend-item"><span class="legend-dot dot-task"></span>Task</span>
+            <span class="legend-item"><span class="legend-dot dot-important"></span>Important</span>
+            <span class="legend-item"><span class="legend-dot dot-done"></span>Done ➔</span>
+          </div>
+        </section>
+
+        <!-- Monthly Consistency Scorecard -->
+        <section class="card stats-card" id="consistency-stats-card">
+          <div class="stats-header">
+            <div class="stats-title-wrap">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--primary)" stroke-width="2"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/></svg>
+              <span class="stats-title">Monthly Consistency</span>
+            </div>
+            <span id="stats-percentage" class="stats-badge">0%</span>
+          </div>
+          <div class="progress-bar-bg">
+            <div id="progress-bar-fill" class="progress-bar-fill" style="width: 0%;"></div>
+          </div>
+          <div class="stats-metrics-grid">
+            <div class="metric-box">
+              <span class="metric-val" id="metric-completed-count">0</span>
+              <span class="metric-lbl">Completed</span>
+            </div>
+            <div class="metric-box">
+              <span class="metric-val" id="metric-streak-count">0 Days</span>
+              <span class="metric-lbl">Current Streak</span>
+            </div>
+            <div class="metric-box">
+              <span class="metric-val" id="metric-total-count">0</span>
+              <span class="metric-lbl">Total Tasks</span>
+            </div>
+          </div>
+        </section>
+
+        <!-- Daily Memo & Scratchpad Quick Card -->
+        <section class="card memo-card" id="memo-container-card">
+          <div class="memo-header">
+            <div class="memo-title-wrap">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+              <h3>Daily Notes & Memo</h3>
+            </div>
+            <span id="memo-save-status" class="memo-status">Auto-saved</span>
+          </div>
+          <textarea 
+            id="daily-memo-editor" 
+            class="memo-textarea" 
+            placeholder="Write daily notes, reflections, or meeting points for this date..."
+            rows="3"
+          ></textarea>
+        </section>
+      </aside>
+
+      <!-- Center Column: Fill Works / Tasks & Consistency Ticking -->
+      <section class="content-panel">
+        <!-- Day Heading Banner -->
+        <div class="day-banner">
+          <div>
+            <span class="badge-tag" id="day-pill">Selected Day</span>
+            <h2 id="selected-day-heading" class="day-heading">Today's Agenda</h2>
+          </div>
+          <div class="day-quick-actions">
+            <button id="btn-clear-completed" class="btn btn-outline btn-sm" title="Remove all checked items for this day">Clear Finished</button>
+          </div>
+        </div>
+
+        <!-- Add Work / Task Form Card (Unlimited Tasks) -->
+        <section class="card add-item-card">
+          <form id="add-item-form" class="add-form">
+            <div class="add-input-row">
+              <input 
+                type="text" 
+                id="item-title-input" 
+                class="form-input text-input" 
+                placeholder="Fill your task, work, or routine... (e.g. 'Complete client report', 'Workout 45 mins')" 
+                required
+                autocomplete="off"
+              >
+              <button type="submit" class="btn btn-primary btn-add" id="btn-submit-task">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+                <span>Add Task</span>
+              </button>
+            </div>
+
+            <!-- Options Row: Due Time, Importance / Priority, Category, Phone Alert & Reminder -->
+            <div class="add-options-row">
+              <div class="option-group">
+                <label for="item-time-input">🕒 Time:</label>
+                <input type="time" id="item-time-input" class="form-input time-input">
+              </div>
+
+              <div class="option-group">
+                <label for="item-priority-select">⚡ Importance:</label>
+                <select id="item-priority-select" class="form-select priority-select">
+                  <option value="high">🔥 High (Important)</option>
+                  <option value="medium" selected>⚡ Medium</option>
+                  <option value="low">⚪ Low</option>
+                </select>
+              </div>
+
+              <div class="option-group">
+                <label for="item-type-select">📁 Type:</label>
+                <select id="item-type-select" class="form-select">
+                  <option value="task">✓ Task (Work)</option>
+                  <option value="habit">🔄 Daily Habit</option>
+                  <option value="event">📅 Meeting / Event</option>
+                </select>
+              </div>
+
+              <div class="option-group reminder-toggle-group">
+                <label class="checkbox-inline">
+                  <input type="checkbox" id="item-reminder-check" checked>
+                  <span>🔔 Set Reminder</span>
+                </label>
+              </div>
+
+              <div class="option-group phone-alert-toggle-group">
+                <label class="checkbox-inline">
+                  <input type="checkbox" id="item-call-check">
+                  <span>📞 Phone Alert</span>
+                </label>
+              </div>
+            </div>
+          </form>
+        </section>
+
+        <!-- Tasks and Works List Section -->
+        <section class="card tasks-section" id="tasks-container-card">
+          <!-- Filters Toolbar -->
+          <div class="tasks-toolbar">
+            <div class="filter-chips">
+              <button class="chip active" data-filter="all">All Works</button>
+              <button class="chip" data-filter="active">Pending (Red ➔)</button>
+              <button class="chip" data-filter="completed">Done (Green ➔)</button>
+              <button class="chip chip-important" data-filter="high">🔥 Important</button>
+              <button class="chip" data-filter="habit">🔄 Habits</button>
+            </div>
+            <div class="quick-status-text" id="filter-status-count">0 items</div>
+          </div>
+
+          <!-- Items Container -->
+          <div id="items-list" class="items-list">
+            <!-- Dynamically injected items -->
+          </div>
+
+          <!-- Empty State -->
+          <div id="empty-state" class="empty-state hidden">
+            <div class="empty-icon">📋</div>
+            <h3>No tasks found for this view</h3>
+            <p>Fill in your tasks above. You can add unlimited tasks, mark them with Green/Red arrow marks, and track consistency dates!</p>
+          </div>
+        </section>
+      </section>
+    </main>
+
+    <!-- =====================================================================
+         BOTTOM PANEL: Reminders, Important Task Highlights & Mobile Call Alert
+         ===================================================================== -->
+    <footer class="bottom-reminder-panel" id="reminders-panel">
+      <div class="reminder-panel-header">
+        <div class="reminder-header-left">
+          <div class="reminder-pulse-icon">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path><path d="M13.73 21a2 2 0 0 1-3.46 0"></path></svg>
+          </div>
+          <div>
+            <h3 class="reminder-panel-title">Smart Reminder & Mobile Alert Station</h3>
+            <p class="reminder-panel-desc">Real-time alerts, browser notifications & phone call alerts for important works</p>
+          </div>
+        </div>
+
+        <div class="reminder-header-actions">
+          <button id="btn-request-notifications" class="btn btn-secondary btn-sm" title="Enable Web Notifications">
+            <span class="status-indicator-dot" id="notif-status-dot"></span>
+            <span id="notif-btn-label">Enable Notifications</span>
+          </button>
+          <button id="btn-test-chime" class="btn btn-outline btn-sm" title="Test Alert Audio Chime">
+            🔊 Test Chime
+          </button>
+          <button id="btn-test-call-sim" class="btn btn-primary btn-sm btn-call-test" title="Test Mobile Phone Ring Alert">
+            📞 Test Phone Call Alert
+          </button>
+        </div>
+      </div>
+
+      <!-- Important Tasks Highlight Area (Highlighted prominently) -->
+      <div class="important-highlight-section" id="important-tasks-banner">
+        <div class="important-section-header">
+          <span class="important-badge-glow">🚨 IMPORTANT & HIGH PRIORITY WORKS</span>
+          <span class="important-count-badge" id="important-tasks-count">0 Important Works Today</span>
+        </div>
+        <div class="important-cards-grid" id="important-cards-container">
+          <!-- Dynamically populated with High Priority items -->
+        </div>
+      </div>
+
+      <!-- Phone Number Alert Config & Scheduled Reminders Row -->
+      <div class="reminder-controls-grid">
+        <!-- Phone Number & Direct Call Settings Box -->
+        <div class="reminder-control-card phone-setup-card">
+          <div class="control-card-header">
+            <h4>📱 Mobile Phone Alert Setup</h4>
+            <span class="badge-mini">Direct Alert</span>
+          </div>
+          <p class="control-desc">Enter your mobile number to receive instant 1-tap call alerts, native ring alarms, or direct dialer connection.</p>
+          
+          <div class="phone-input-row">
+            <input 
+              type="tel" 
+              id="user-phone-input" 
+              class="form-input phone-input" 
+              placeholder="+1 234 567 8900 or +91 98765 43210"
+              autocomplete="tel"
+            >
+            <button id="btn-save-phone" class="btn btn-secondary btn-sm">Save</button>
+            <a id="btn-direct-tel-link" href="tel:" class="btn btn-primary btn-sm btn-dial-now" title="Open Native Phone Dialer">
+              📞 Call Now
+            </a>
+          </div>
+          <div class="phone-features-row">
+            <span class="pill-feature">✓ Loud Melodic Ringtone</span>
+            <span class="pill-feature">✓ Vibration Alert</span>
+            <span class="pill-feature">✓ Screen Caller ID</span>
+          </div>
+        </div>
+
+        <!-- Active Timed Reminders Queue -->
+        <div class="reminder-control-card queue-card">
+          <div class="control-card-header">
+            <h4>⏰ Today's Timed Reminders</h4>
+            <span class="badge-mini" id="active-reminders-count">0 Active</span>
+          </div>
+          <div id="reminders-queue-list" class="reminders-queue-list">
+            <!-- Dynamically populated -->
+          </div>
+        </div>
+      </div>
+    </footer>
+
+    <!-- Mobile Bottom Navigation Bar (For Phones & Tablets) -->
+    <nav class="mobile-bottom-nav">
+      <button class="mobile-nav-btn active" data-target="tasks">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="9 11 12 14 22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>
+        <span>Tasks</span>
+      </button>
+      <button class="mobile-nav-btn" data-target="calendar">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+        <span>Calendar</span>
+      </button>
+      <button class="mobile-nav-btn" data-target="consistency">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/></svg>
+        <span>Consistency</span>
+      </button>
+      <button class="mobile-nav-btn" data-target="reminders">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path><path d="M13.73 21a2 2 0 0 1-3.46 0"></path></svg>
+        <span>Reminders</span>
+      </button>
+    </nav>
+
+    <!-- =====================================================================
+         MODAL 1: Realistic Mobile Phone Call Alert / Ringtone Simulator
+         ===================================================================== -->
+    <div id="incoming-call-modal" class="call-modal-backdrop hidden">
+      <div class="phone-call-screen">
+        <div class="call-status-pill">INCOMING TASK CALL</div>
+        <div class="call-avatar-pulse">
+          <div class="avatar-ring ring-1"></div>
+          <div class="avatar-ring ring-2"></div>
+          <div class="avatar-inner">
+            <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/></svg>
+          </div>
+        </div>
+        
+        <h2 class="call-title" id="call-task-title">Important Work Reminder</h2>
+        <p class="call-subtitle" id="call-task-details">🔥 High Priority Task Due Now</p>
+        <p class="call-phone-number" id="call-phone-display">Target: My Mobile</p>
+        
+        <div class="call-action-buttons">
+          <button id="btn-call-decline" class="call-circle-btn btn-decline" title="Decline / Snooze 5 Min">
+            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+            <span>Snooze</span>
+          </button>
+
+          <button id="btn-call-accept" class="call-circle-btn btn-accept" title="Answer / Mark Completed">
+            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/></svg>
+            <span>Done ➔</span>
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- =====================================================================
+         MODAL 2: Full Monthly Consistency Matrix Modal
+         ===================================================================== -->
+    <div id="consistency-modal" class="modal-backdrop hidden">
+      <div class="modal-card modal-lg">
+        <div class="modal-header">
+          <div>
+            <h3>Monthly Consistency Tracker</h3>
+            <p class="modal-subtitle">Track dates of the month with Green Right Arrow (Done) vs Red Wrong Arrow (Missed)</p>
+          </div>
+          <button id="btn-consistency-modal-close" class="btn-clear">&times;</button>
+        </div>
+        <div class="consistency-matrix-body">
+          <div class="consistency-month-nav">
+            <span id="matrix-month-title" class="matrix-title">October 2026 Consistency</span>
+            <div class="matrix-legend">
+              <span class="legend-chip"><span class="arrow-badge mini green">➔</span> Done</span>
+              <span class="legend-chip"><span class="arrow-badge mini red">➔</span> Incomplete</span>
+            </div>
+          </div>
+          <div id="full-consistency-table" class="full-consistency-table">
+            <!-- Dynamically populated table of tasks & all days 1-31 -->
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- =====================================================================
+         MODAL 3: Edit Task / Work Modal
+         ===================================================================== -->
+    <div id="edit-modal" class="modal-backdrop hidden">
+      <div class="modal-card">
+        <div class="modal-header">
+          <h3>Edit Work / Task</h3>
+          <button id="modal-close-btn" class="btn-clear">&times;</button>
+        </div>
+        <form id="edit-item-form">
+          <input type="hidden" id="edit-item-id">
+          
+          <div class="form-group">
+            <label for="edit-item-title">Title / Description</label>
+            <input type="text" id="edit-item-title" class="form-input" required>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label for="edit-item-date">Date</label>
+              <input type="date" id="edit-item-date" class="form-input" required>
+            </div>
+
+            <div class="form-group">
+              <label for="edit-item-time">Due Time</label>
+              <input type="time" id="edit-item-time" class="form-input">
+            </div>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label for="edit-item-type">Type</label>
+              <select id="edit-item-type" class="form-select">
+                <option value="task">✓ Task (Work)</option>
+                <option value="habit">🔄 Daily Habit</option>
+                <option value="event">📅 Meeting / Event</option>
+              </select>
+            </div>
+
+            <div class="form-group">
+              <label for="edit-item-priority">Importance / Priority</label>
+              <select id="edit-item-priority" class="form-select">
+                <option value="high">🔥 High (Important)</option>
+                <option value="medium">⚡ Medium</option>
+                <option value="low">⚪ Low</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="modal-actions">
+            <button type="button" id="btn-delete-from-modal" class="btn btn-danger">Delete</button>
+            <div class="modal-right-actions">
+              <button type="button" id="btn-cancel-edit" class="btn btn-secondary">Cancel</button>
+              <button type="submit" class="btn btn-primary">Save Changes</button>
+            </div>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <!-- =====================================================================
+         MODAL 4: Device Storage Backup & Restore
+         ===================================================================== -->
+    <div id="backup-modal" class="modal-backdrop hidden">
+      <div class="modal-card">
+        <div class="modal-header">
+          <h3>Device Storage & Backup</h3>
+          <button id="backup-modal-close" class="btn-clear">&times;</button>
+        </div>
+        <div class="backup-body">
+          <p class="backup-desc">All your tasks, consistency streak records, phone numbers, and memos are kept safely in your <strong>local device storage</strong>. You can export a JSON backup file to transfer between your laptop and mobile anytime.</p>
+          
+          <div class="backup-card-action">
+            <div class="backup-action-info">
+              <h4>Export All Data (JSON)</h4>
+              <p>Save a complete backup file to your computer or phone.</p>
+            </div>
+            <button id="btn-export-json" class="btn btn-primary">Download Backup</button>
+          </div>
+
+          <div class="backup-card-action">
+            <div class="backup-action-info">
+              <h4>Import Data from File</h4>
+              <p>Restore tasks, consistency history, and settings from a JSON backup.</p>
+            </div>
+            <label class="btn btn-secondary file-upload-label">
+              <span>Choose File</span>
+              <input type="file" id="import-json-file" accept=".json" style="display:none;">
+            </label>
+          </div>
+
+          <div class="backup-card-action danger-zone">
+            <div class="backup-action-info">
+              <h4>Reset / Wipe Local Data</h4>
+              <p>Remove all tasks and consistency data stored in this browser.</p>
+            </div>
+            <button id="btn-reset-data" class="btn btn-danger btn-sm">Clear All</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Toast Notification Popup -->
+    <div id="toast" class="toast hidden">Action completed</div>
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>
